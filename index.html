@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thud & Tile - パズルゲーム</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        #game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        #game-canvas {
+            border: 2px solid #00ffff;
+            background-color: #000000;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        
+        #game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 200px;
+        }
+        
+        .info-panel {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+            font-size: 1.1rem;
+        }
+        
+        #score {
+            font-size: 1.5rem;
+            color: #ffff00;
+        }
+        
+        #game-mode {
+            font-size: 1.2rem;
+            color: #ff6600;
+        }
+        
+        #controls {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        #controls h3 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+        }
+        
+        #controls ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        
+        #controls li {
+            margin: 5px 0;
+            color: #cccccc;
+        }
+        
+        button {
+            background-color: #00ffff;
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: #00cccc;
+            box-shadow: 0 0 10px #00ffff;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        #debug-info {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            #game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>THUD & TILE</h1>
+    
+    <div id="game-container">
+        <canvas id="game-canvas" width="400" height="800"></canvas>
+        
+        <div id="game-info">
+            <div class="info-panel">
+                <h3>スコア</h3>
+                <div id="score">0</div>
+            </div>
+            
+            <div class="info-panel">
+                <h3>ゲームモード</h3>
+                <div id="game-mode">タイトル</div>
+            </div>
+            
+            <div class="info-panel">
+                <h3>操作</h3>
+                <button id="start-game">ゲーム開始</button>
+                <button id="restart-button" onclick="restartGame()" style="margin-top: 10px;">リスタート</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <h3>操作方法</h3>
+        <ul>
+            <li>A/左矢印: 左移動</li>
+            <li>D/右矢印: 右移動</li>
+            <li>S/下矢印: ソフトドロップ</li>
+            <li>W/上矢印: 回転</li>
+            <li>Space: ハードドロップ</li>
+            <li>R: リスタート</li>
+            <li>Q: 終了</li>
+        </ul>
+    </div>
+    
+    <div id="debug-info">
+        <div>WASM バージョン: <span id="wasm-version">読み込み中...</span></div>
+        <div>ボードサイズ: <span id="board-dimensions">読み込み中...</span></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
