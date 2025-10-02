@@ -1,0 +1,21 @@
+{
+  "name": "thud-and-tile-web",
+  "version": "1.0.0",
+  "description": "Thud & Tile - Web版ゲーム",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build", 
+    "preview": "vite preview",
+    "wasm:build": "cd ../thud-and-tile && wasm-pack build --target web --out-dir ../thud-and-tile-web/pkg",
+    "wasm:dev": "npm run wasm:build && npm run dev"
+  },
+  "keywords": ["tetris", "game", "wasm", "rust"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.5"
+  }
+}
