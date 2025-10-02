@@ -285,6 +285,9 @@ function drawGame() {
         }
     }
     
+    // ゴーストピースを描画（現在のピースより下に）
+    drawGhostPiece();
+    
     // 現在のピースを描画
     const currentPieceBlocks = gameState.get_current_piece_blocks();
     if (currentPieceBlocks && currentPieceBlocks.length > 0) {
@@ -428,6 +431,45 @@ function drawNextPiece() {
             
             nextCtx.fillRect(pixelX, pixelY, blockSize - 1, blockSize - 1);
         }
+    }
+}
+
+// ゴーストピース描画関数
+function drawGhostPiece() {
+    if (!gameState) return;
+    
+    // ゴーストピースのブロック座標を取得
+    const ghostPieceBlocks = gameState.get_ghost_piece_blocks();
+    if (ghostPieceBlocks && ghostPieceBlocks.length > 0) {
+        const [BOARD_WIDTH, BOARD_HEIGHT] = get_board_dimensions();
+        const cellWidth = canvas.width / BOARD_WIDTH;
+        const cellHeight = canvas.height / BOARD_HEIGHT;
+        
+        // 半透明設定
+        const previousAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = 0.3; // 30% 透明度
+        
+        // get_ghost_piece_blocks() は [x, y, color, x, y, color, ...] 形式で返す
+        for (let i = 0; i < ghostPieceBlocks.length; i += 3) {
+            const blockX = ghostPieceBlocks[i];
+            const blockY = ghostPieceBlocks[i + 1];
+            const blockColor = ghostPieceBlocks[i + 2];
+            
+            if (blockX >= 0 && blockX < BOARD_WIDTH && 
+                blockY >= 0 && blockY < BOARD_HEIGHT) {
+                
+                // ゴーストピース用の色設定（薄い色で表示）
+                ctx.fillStyle = getCellColor(blockColor + 1);
+                
+                const pixelX = blockX * cellWidth;
+                const pixelY = blockY * cellHeight;
+                
+                ctx.fillRect(pixelX, pixelY, cellWidth - 1, cellHeight - 1);
+            }
+        }
+        
+        // 透明度を元に戻す
+        ctx.globalAlpha = previousAlpha;
     }
 }
 
