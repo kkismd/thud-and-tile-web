@@ -310,6 +310,9 @@ function drawGame() {
     
     // グリッドを描画
     drawGrid();
+    
+    // 次ピースを描画
+    drawNextPiece();
 }
 
 function drawGrid() {
@@ -388,5 +391,44 @@ window.addEventListener('beforeunload', () => {
         gameState.free();
     }
 });
+
+// 次ピース描画関数
+function drawNextPiece() {
+    const nextCanvas = document.getElementById('next-piece-canvas') as HTMLCanvasElement;
+    if (!nextCanvas || !gameState) return;
+    
+    const nextCtx = nextCanvas.getContext('2d');
+    if (!nextCtx) return;
+    
+    // 背景クリア
+    nextCtx.fillStyle = '#000000';
+    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+    
+    // 次ピースのブロック座標を取得
+    const nextPieceBlocks = gameState.get_next_piece_blocks();
+    if (nextPieceBlocks && nextPieceBlocks.length > 0) {
+        // ブロックサイズ（プレビュー用に小さく）
+        const blockSize = 25;
+        
+        // 描画オフセット（中央寄せ）
+        const offsetX = (nextCanvas.width - blockSize * 4) / 2;
+        const offsetY = (nextCanvas.height - blockSize * 4) / 2;
+        
+        // get_next_piece_blocks() は [x, y, color, x, y, color, ...] 形式で返す
+        for (let i = 0; i < nextPieceBlocks.length; i += 3) {
+            const blockX = nextPieceBlocks[i];
+            const blockY = nextPieceBlocks[i + 1];
+            const blockColor = nextPieceBlocks[i + 2];
+            
+            // 次ピース用の色設定
+            nextCtx.fillStyle = getCellColor(blockColor + 1);
+            
+            const pixelX = offsetX + blockX * blockSize;
+            const pixelY = offsetY + blockY * blockSize;
+            
+            nextCtx.fillRect(pixelX, pixelY, blockSize - 1, blockSize - 1);
+        }
+    }
+}
 
 export { initGame };
