@@ -195,8 +195,11 @@ function updateScoreDisplay() {
 }
 
 function setupCanvas() {
-    // レスポンシブデザイン
+    // モバイル対応のレスポンシブデザイン
     const container = canvas.parentElement;
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+    
     if (container) {
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
@@ -204,18 +207,86 @@ function setupCanvas() {
         // アスペクト比を維持しながらサイズ調整
         const boardAspect = 10 / 20; // BOARD_WIDTH / BOARD_HEIGHT
         
-        if (containerWidth / containerHeight > boardAspect) {
-            canvas.height = containerHeight * 0.8;
-            canvas.width = canvas.height * boardAspect;
+        let displayWidth, displayHeight;
+        
+        if (isMobile) {
+            // モバイル用の高さ制限
+            const maxMobileHeight = window.innerHeight * 0.6; // ビューポートの60%まで
+            
+            if (isSmallMobile) {
+                // 小さい画面: 縦向きレイアウト
+                displayWidth = Math.min(containerWidth * 0.85, 320);
+                displayHeight = Math.min(displayWidth / boardAspect, maxMobileHeight);
+            } else {
+                // タブレット・中間サイズ: 横向きレイアウト、フィールド縮小
+                displayWidth = Math.min(window.innerWidth * 0.6, 280);
+                displayHeight = Math.min(displayWidth / boardAspect, maxMobileHeight);
+            }
+            
+            // 高さ制限により幅を再調整（アスペクト比を保持）
+            if (displayHeight === maxMobileHeight) {
+                displayWidth = displayHeight * boardAspect;
+            }
         } else {
-            canvas.width = containerWidth * 0.8;
-            canvas.height = canvas.width / boardAspect;
+            // デスクトップ: 元のロジック
+            if (containerWidth / containerHeight > boardAspect) {
+                displayHeight = containerHeight * 0.8;
+                displayWidth = displayHeight * boardAspect;
+            } else {
+                displayWidth = containerWidth * 0.8;
+                displayHeight = displayWidth / boardAspect;
+            }
         }
+        
+        // 表示サイズを設定
+        canvas.style.width = displayWidth + 'px';
+        canvas.style.height = displayHeight + 'px';
+        
+        // 内部解像度は表示サイズと同じにしてピクセル比を1:1に保つ
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
     } else {
         // デフォルトサイズ
-        canvas.width = 300;
-        canvas.height = 600;
+        const defaultDisplayHeight = isMobile ? Math.min(window.innerHeight * 0.6, 400) : 600;
+        const defaultDisplayWidth = isMobile ? 280 : 300;
+        
+        const finalHeight = Math.min(defaultDisplayWidth / (10 / 20), defaultDisplayHeight);
+        const finalWidth = finalHeight * (10 / 20);
+        
+        canvas.style.width = finalWidth + 'px';
+        canvas.style.height = finalHeight + 'px';
+        canvas.width = finalWidth;
+        canvas.height = finalHeight;
     }
+    
+    // Canvas属性とCSSの同期
+    canvas.setAttribute('width', canvas.width.toString());
+    canvas.setAttribute('height', canvas.height.toString());
+    
+    // ネクストピースキャンバスのサイズも調整
+    setupNextPieceCanvas(isMobile, isSmallMobile);
+}
+
+function setupNextPieceCanvas(isMobile: boolean, isSmallMobile: boolean) {
+    const nextCanvas = document.getElementById('next-piece-canvas') as HTMLCanvasElement;
+    if (!nextCanvas) return;
+    
+    let size: number;
+    if (isSmallMobile) {
+        size = 80;
+    } else if (isMobile) {
+        size = 80;
+    } else {
+        size = 120;
+    }
+    
+    // 表示サイズと内部解像度を同じにする
+    nextCanvas.style.width = size + 'px';
+    nextCanvas.style.height = size + 'px';
+    nextCanvas.width = size;
+    nextCanvas.height = size;
+    nextCanvas.setAttribute('width', size.toString());
+    nextCanvas.setAttribute('height', size.toString());
 }
 
 function setupEventListeners() {
@@ -224,6 +295,9 @@ function setupEventListeners() {
     
     // ウィンドウリサイズ
     window.addEventListener('resize', setupCanvas);
+    
+    // モバイル用タッチ操作
+    setupTouchControls();
     
     // ゲーム開始ボタン
     const startButton = document.getElementById('start-game');
@@ -236,6 +310,82 @@ function setupEventListeners() {
     if (pauseButton) {
         pauseButton.addEventListener('click', togglePause);
     }
+}
+
+function setupTouchControls() {
+    if (!canvas) return;
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
+    });
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (!gameState) return;
+        
+        const touch = e.changedTouches[0];
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
+        const touchEndTime = Date.now();
+        
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const deltaTime = touchEndTime - touchStartTime;
+        
+        const minSwipeDistance = 30;
+        const maxTapTime = 200;
+        
+        // タップ（短時間で小さい移動）
+        if (deltaTime < maxTapTime && Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+            // タップで回転
+            try {
+                gameState.handle_input(3); // RotateClockwise
+            } catch (error) {
+                console.error('Rotation failed:', error);
+            }
+        }
+        // スワイプ
+        else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // 横スワイプ
+            if (Math.abs(deltaX) > minSwipeDistance) {
+                try {
+                    if (deltaX > 0) {
+                        gameState.handle_input(1); // MoveRight
+                    } else {
+                        gameState.handle_input(0); // MoveLeft
+                    }
+                } catch (error) {
+                    console.error('Move failed:', error);
+                }
+            }
+        } else {
+            // 縦スワイプ
+            if (Math.abs(deltaY) > minSwipeDistance) {
+                try {
+                    if (deltaY > 0) {
+                        gameState.handle_input(2); // SoftDrop
+                    } else {
+                        gameState.handle_input(5); // HardDrop
+                    }
+                } catch (error) {
+                    console.error('Drop failed:', error);
+                }
+            }
+        }
+    });
+    
+    // タッチスクロールを防ぐ
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    });
 }
 
 function startGame() {
@@ -537,8 +687,8 @@ function drawNextPiece() {
     // 次ピースのブロック座標を取得
     const nextPieceBlocks = gameState.get_next_piece_blocks();
     if (nextPieceBlocks && nextPieceBlocks.length > 0) {
-        // ブロックサイズ（プレビュー用に小さく）
-        const blockSize = 25;
+        // ブロックサイズ（キャンバスサイズに応じて調整）
+        const blockSize = Math.floor(nextCanvas.width / 5); // 5分割でゆったり表示
         
         // 描画オフセット（中央寄せ）
         const offsetX = (nextCanvas.width - blockSize * 4) / 2;
