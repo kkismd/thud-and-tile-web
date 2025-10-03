@@ -91,6 +91,12 @@ async function initGame() {
         // イベントリスナーを設定
         setupEventListeners();
         
+        // アニメーション更新タイマーを開始
+        startAnimationUpdates();
+        
+        // 自動落下機能を開始
+        startAutoFall();
+        
         // ゲームループを開始
         gameLoop();
         
@@ -244,15 +250,31 @@ function startGame() {
     updateGameUI();
 }
 
+function startAnimationUpdates() {
+    if (!gameState) return;
+    
+    // アニメーション更新タイマーを設定（16ms = 60FPS相当）
+    if (animationInterval !== null) {
+        clearInterval(animationInterval);
+    }
+    
+    animationInterval = window.setInterval(() => {
+        if (gameState) {
+            gameState.update_animation();
+            // アニメーション更新の場合はUIも更新
+            updateGameUI();
+        }
+    }, 16);
+    
+    console.log('アニメーション更新タイマー開始: 16ms間隔');
+}
+
 function startAutoFall() {
     if (!gameState) return;
     
     // 既存のタイマーをクリア
     if (autoFallInterval !== null) {
         clearInterval(autoFallInterval);
-    }
-    if (animationInterval !== null) {
-        clearInterval(animationInterval);
     }
     
     // 自動落下の間隔を取得（WASMから）
@@ -270,14 +292,6 @@ function startAutoFall() {
             }
         }
     }, fallSpeedMs);
-    
-    // アニメーション更新タイマーを設定（CLI版互換）
-    animationInterval = window.setInterval(() => {
-        if (gameState) {
-            gameState.update_animation();
-            updateGameUI();
-        }
-    }, 16); // 60FPS相当で更新
 }
 
 function stopAutoFall() {
@@ -285,11 +299,6 @@ function stopAutoFall() {
         clearInterval(autoFallInterval);
         autoFallInterval = null;
         console.log('自動落下タイマー停止');
-    }
-    if (animationInterval !== null) {
-        clearInterval(animationInterval);
-        animationInterval = null;
-        console.log('アニメーションタイマー停止');
     }
 }
 
