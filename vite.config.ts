@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  base: '/thud-and-tile-web/', // GitHub Pages用のベースパス
   server: {
     fs: {
       allow: ['..']
