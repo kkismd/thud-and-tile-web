@@ -12,8 +12,10 @@ let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let animationId: number;
 
-// 自動落下用タイマー
-let autoFallInterval: ReturnType<typeof setInterval> | null = null;
+// 自動落下タイマー
+let autoFallInterval: number | null = null;
+// アニメーション更新タイマー
+let animationInterval: number | null = null;
 
 // 入力マッピング
 const INPUT_MAPPING = {
@@ -115,12 +117,19 @@ function updateDebugInfo() {
     
     const debugElement = document.getElementById('debug-info');
     if (debugElement) {
+        // アニメーション状態を取得
+        const animationInfo = gameState.get_animation_info();
+        const animationStatus = animationInfo && animationInfo.length > 0 
+            ? `Animation: ${animationInfo.length} items` 
+            : 'No Animation';
+            
         debugElement.innerHTML = `
             <strong>Debug情報:</strong><br>
             WASM Version: ${get_version()}<br>
             Game Mode: ${gameState.get_game_mode()}<br>
             Total Score: ${gameState.get_score()}<br>
-            Fall Speed: ${gameState.get_fall_speed_ms()}ms
+            Fall Speed: ${gameState.get_fall_speed_ms()}ms<br>
+            ${animationStatus}
         `;
     }
 }
@@ -242,6 +251,9 @@ function startAutoFall() {
     if (autoFallInterval !== null) {
         clearInterval(autoFallInterval);
     }
+    if (animationInterval !== null) {
+        clearInterval(animationInterval);
+    }
     
     // 自動落下の間隔を取得（WASMから）
     const fallSpeedMs = gameState.get_fall_speed_ms();
@@ -249,7 +261,7 @@ function startAutoFall() {
     console.log(`自動落下タイマー開始: ${fallSpeedMs}ms間隔`);
     
     // 自動落下タイマーを設定
-    autoFallInterval = setInterval(() => {
+    autoFallInterval = window.setInterval(() => {
         if (gameState && gameState.get_game_mode() === 1) { // Playing mode
             const didFall = gameState.auto_fall();
             if (didFall) {
@@ -258,6 +270,14 @@ function startAutoFall() {
             }
         }
     }, fallSpeedMs);
+    
+    // アニメーション更新タイマーを設定（CLI版互換）
+    animationInterval = window.setInterval(() => {
+        if (gameState) {
+            gameState.update_animation();
+            updateGameUI();
+        }
+    }, 16); // 60FPS相当で更新
 }
 
 function stopAutoFall() {
@@ -265,6 +285,11 @@ function stopAutoFall() {
         clearInterval(autoFallInterval);
         autoFallInterval = null;
         console.log('自動落下タイマー停止');
+    }
+    if (animationInterval !== null) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+        console.log('アニメーションタイマー停止');
     }
 }
 
