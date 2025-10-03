@@ -83,8 +83,8 @@ async function initGame() {
         // ゲーム状態を作成
         gameState = new WasmGameState();
         
-        // デバッグ情報を表示
-        updateDebugInfo();
+        // ゲームUIを表示
+        updateGameUI();
         
         // イベントリスナーを設定
         setupEventListeners();
@@ -100,6 +100,16 @@ async function initGame() {
     }
 }
 
+function updateGameUI() {
+    if (!gameState) return;
+    
+    // デバッグ情報を更新
+    updateDebugInfo();
+
+    // スコア表示を更新
+    updateScoreDisplay();
+}
+
 function updateDebugInfo() {
     if (!gameState) return;
     
@@ -109,9 +119,63 @@ function updateDebugInfo() {
             <strong>Debug情報:</strong><br>
             WASM Version: ${get_version()}<br>
             Game Mode: ${gameState.get_game_mode()}<br>
-            Score: ${gameState.get_score()}<br>
+            Total Score: ${gameState.get_score()}<br>
             Fall Speed: ${gameState.get_fall_speed_ms()}ms
         `;
+    }
+}
+
+function updateScoreDisplay() {
+    if (!gameState) return;
+
+    // 総合スコア
+    const scoreElement = document.getElementById('score');
+    if (scoreElement) {
+        scoreElement.textContent = gameState.get_score().toString();
+    }
+
+    // 3色別スコアを取得 [cyan, magenta, yellow]
+    const colorScores = gameState.get_color_scores();
+    
+    const cyanElement = document.getElementById('cyan-score');
+    if (cyanElement && colorScores.length >= 3) {
+        cyanElement.textContent = colorScores[0].toString(); // Cyan score
+    }
+
+    const magentaElement = document.getElementById('magenta-score');
+    if (magentaElement && colorScores.length >= 3) {
+        magentaElement.textContent = colorScores[1].toString(); // Magenta score
+    }
+
+    const yellowElement = document.getElementById('yellow-score');
+    if (yellowElement && colorScores.length >= 3) {
+        yellowElement.textContent = colorScores[2].toString(); // Yellow score
+    }
+
+    // Max-chain表示を更新
+    const maxChains = gameState.get_max_chains(); // [cyan, magenta, yellow]
+    
+    // 全体のmax-chain
+    const overallMaxChain = Math.max(...maxChains);
+    const maxChainOverallElement = document.getElementById('max-chain-overall');
+    if (maxChainOverallElement) {
+        maxChainOverallElement.textContent = overallMaxChain.toString();
+    }
+
+    // 色別max-chain
+    const cyanMaxChainElement = document.getElementById('cyan-max-chain');
+    if (cyanMaxChainElement && maxChains.length >= 3) {
+        cyanMaxChainElement.textContent = maxChains[0].toString(); // Cyan max-chain
+    }
+
+    const magentaMaxChainElement = document.getElementById('magenta-max-chain');
+    if (magentaMaxChainElement && maxChains.length >= 3) {
+        magentaMaxChainElement.textContent = maxChains[1].toString(); // Magenta max-chain
+    }
+
+    const yellowMaxChainElement = document.getElementById('yellow-max-chain');
+    if (yellowMaxChainElement && maxChains.length >= 3) {
+        yellowMaxChainElement.textContent = maxChains[2].toString(); // Yellow max-chain
     }
 }
 
@@ -168,7 +232,7 @@ function startGame() {
     // 自動落下タイマーを開始
     startAutoFall();
     
-    updateDebugInfo();
+    updateGameUI();
 }
 
 function startAutoFall() {
@@ -190,7 +254,7 @@ function startAutoFall() {
             const didFall = gameState.auto_fall();
             if (didFall) {
                 console.log('自動落下実行');
-                updateDebugInfo();
+                updateGameUI();
             }
         }
     }, fallSpeedMs);
@@ -225,7 +289,7 @@ function handleKeyPress(event: KeyboardEvent) {
             console.log('ゲーム再開始');
             gameState.start_game();
             startAutoFall(); // 自動落下も再開始
-            updateDebugInfo();
+            updateGameUI();
             return;
         }
         
@@ -240,14 +304,14 @@ function handleKeyPress(event: KeyboardEvent) {
         const handled = gameState.handle_input(inputCode);
         
         if (handled) {
-            updateDebugInfo();
+            updateGameUI();
             console.log(`入力処理完了: ${inputCode}`);
         }
     }
 }
 
 function updateUI() {
-    updateDebugInfo();
+    updateGameUI();
 }
 
 function drawGame() {
@@ -284,6 +348,30 @@ function drawGame() {
             }
         }
     }
+    
+    // Connected cellsの詳細情報を取得して数字を描画
+    const connectedCellsInfo = gameState.get_connected_cells_info();
+    if (connectedCellsInfo && connectedCellsInfo.length > 0) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.min(cellWidth, cellHeight) * 0.5}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        for (let i = 0; i < connectedCellsInfo.length; i += 3) {
+            const x = connectedCellsInfo[i];
+            const y = connectedCellsInfo[i + 1];
+            const count = connectedCellsInfo[i + 2];
+            
+            const pixelX = x * cellWidth;
+            const pixelY = y * cellHeight;
+            
+            // 連結数を表示
+            ctx.fillText(count.toString(), pixelX + cellWidth / 2, pixelY + cellHeight / 2);
+        }
+    }
+    
+    // アニメーション効果を描画（ボードの上に重ねる）
+    drawLineAnimation();
     
     // ゴーストピースを描画（現在のピースより下に）
     drawGhostPiece();
@@ -344,25 +432,30 @@ function drawGrid() {
 }
 
 function getCellColor(cellValue: number): string {
-    // cellValueに基づいて色を決定
+    // CLI版3色システムに対応したカラーマッピング
     switch (cellValue) {
-        case 1: return '#ff0000'; // Red
-        case 2: return '#00ff00'; // Green  
-        case 3: return '#0000ff'; // Blue
-        case 4: return '#ffff00'; // Yellow
-        case 5: return '#ff00ff'; // Magenta
-        case 6: return '#00ffff'; // Cyan
+        // 3色システム（CLI版準拠）
+        case 1: return '#00ffff'; // Cyan (色値0+1)
+        case 2: return '#ff00ff'; // Magenta (色値1+1)
+        case 3: return '#ffff00'; // Yellow (色値2+1)
+        
+        // 後方互換性のため旧色も保持
+        case 4: return '#ff0000'; // Red
+        case 5: return '#00ff00'; // Green
+        case 6: return '#0000ff'; // Blue
         case 7: return '#ffffff'; // White
         case 8: return '#000000'; // Black
         case 9: return '#808080'; // Dark Grey
         
-        // Connected cells (10+)
-        case 11: return '#cc0000'; // Connected Red
-        case 12: return '#00cc00'; // Connected Green
-        case 13: return '#0000cc'; // Connected Blue
-        case 14: return '#cccc00'; // Connected Yellow
-        case 15: return '#cc00cc'; // Connected Magenta
-        case 16: return '#00cccc'; // Connected Cyan
+        // Connected cells (10+) - CLI版の3色スコアリング用
+        case 10: return '#00cccc'; // Connected Cyan (0+10)
+        case 11: return '#cc00cc'; // Connected Magenta (1+10)
+        case 12: return '#cccc00'; // Connected Yellow (2+10)
+        
+        // その他のConnected cells（後方互換性）
+        case 13: return '#cc0000'; // Connected Red
+        case 14: return '#00cc00'; // Connected Green
+        case 15: return '#0000cc'; // Connected Blue
         
         // Special cells
         case 20: return '#666666'; // Gray
@@ -470,6 +563,67 @@ function drawGhostPiece() {
         
         // 透明度を元に戻す
         ctx.globalAlpha = previousAlpha;
+    }
+}
+
+// ラインアニメーション描画関数（CLI版互換Animation System対応）
+function drawLineAnimation() {
+    if (!gameState || !ctx) return;
+    
+    // アニメーション情報を取得
+    const animationInfo = gameState.get_animation_info();
+    if (!animationInfo || animationInfo.length === 0) {
+        return; // アニメーション中でない
+    }
+    
+    // 新しい形式: [type_id, elapsed_ms, ...additional_data]
+    let index = 0;
+    while (index < animationInfo.length) {
+        const animationType = animationInfo[index];
+        const elapsedMs = animationInfo[index + 1];
+        
+        if (animationType === 1) { // LineBlink animation
+            const count = animationInfo[index + 2];
+            const lineCount = animationInfo[index + 3];
+            const lines: number[] = [];
+            for (let i = 0; i < lineCount; i++) {
+                lines.push(animationInfo[index + 4 + i]);
+            }
+            
+            // CLI版と同じ点滅パターン（120msごとに切り替え、countベース）
+            const blinkCycle = count % 2;
+            if (blinkCycle === 1) { // 点滅の"オン"状態
+                const [, BOARD_HEIGHT] = get_board_dimensions();
+                const cellHeight = canvas.height / BOARD_HEIGHT;
+                
+                // 点滅ラインを白でハイライト
+                ctx.fillStyle = '#FFFFFF';
+                const previousAlpha = ctx.globalAlpha;
+                ctx.globalAlpha = 0.7; // 70%透明度
+                
+                for (const lineY of lines) {
+                    const pixelY = lineY * cellHeight;
+                    ctx.fillRect(0, pixelY, canvas.width, cellHeight - 1);
+                }
+                
+                ctx.globalAlpha = previousAlpha;
+            }
+            
+            index += 4 + lineCount; // 次のアニメーションデータにスキップ
+            
+        } else if (animationType === 2) { // PushDown animation
+            const grayLineY = animationInfo[index + 2];
+            
+            // PushDownアニメーション表示（将来実装）
+            console.log(`PushDown animation at line ${grayLineY}, elapsed: ${elapsedMs}ms`);
+            
+            index += 3; // 次のアニメーションデータにスキップ
+            
+        } else {
+            // 不明なアニメーションタイプ
+            console.warn(`Unknown animation type: ${animationType}`);
+            break;
+        }
     }
 }
 

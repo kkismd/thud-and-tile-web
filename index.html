@@ -62,6 +62,30 @@
             color: #ffff00;
         }
         
+        #max-chain-overall {
+            font-size: 1.5rem;
+            color: #ffff00;
+        }
+        
+        .color-score {
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+            font-size: 1.0rem;
+        }
+        
+        .color-score.cyan {
+            color: #00ffff;
+        }
+        
+        .color-score.magenta {
+            color: #ff00ff;
+        }
+        
+        .color-score.yellow {
+            color: #ffff00;
+        }
+        
         #game-mode {
             font-size: 1.2rem;
             color: #ff6600;
@@ -140,6 +164,35 @@
             <div class="info-panel">
                 <h3>スコア</h3>
                 <div id="score">0</div>
+                <div class="color-score cyan">
+                    <span>CYAN:</span>
+                    <span id="cyan-score">0</span>
+                </div>
+                <div class="color-score magenta">
+                    <span>MAGENTA:</span>
+                    <span id="magenta-score">0</span>
+                </div>
+                <div class="color-score yellow">
+                    <span>YELLOW:</span>
+                    <span id="yellow-score">0</span>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h3>MAX-CHAIN</h3>
+                <div id="max-chain-overall">0</div>
+                <div class="color-score cyan">
+                    <span>CYAN:</span>
+                    <span id="cyan-max-chain">0</span>
+                </div>
+                <div class="color-score magenta">
+                    <span>MAGENTA:</span>
+                    <span id="magenta-max-chain">0</span>
+                </div>
+                <div class="color-score yellow">
+                    <span>YELLOW:</span>
+                    <span id="yellow-max-chain">0</span>
+                </div>
             </div>
             
             <div class="info-panel">
