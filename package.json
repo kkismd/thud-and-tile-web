@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build", 
     "preview": "vite preview",
-    "wasm:build": "cd ../thud-and-tile && wasm-pack build --target web --out-dir ../thud-and-tile-web/pkg",
-    "wasm:dev": "npm run wasm:build && npm run dev",
-    "deploy": "npm run wasm:build && npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "keywords": ["tetris", "game", "wasm", "rust"],
   "author": "",
