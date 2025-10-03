@@ -17,6 +17,10 @@ let autoFallInterval: number | null = null;
 // アニメーション更新タイマー
 let animationInterval: number | null = null;
 
+// ゲームオーバー状態
+let currentGameMode: number = 0; // 前回のゲームモード
+let gameOverShown: boolean = false; // ゲームオーバー画面が表示されているか
+
 // 入力マッピング
 const INPUT_MAPPING = {
     // 移動
@@ -85,6 +89,9 @@ async function initGame() {
         // ゲーム状態を作成
         gameState = new WasmGameState();
         
+        // 初期ゲームモードを設定
+        currentGameMode = gameState.get_game_mode();
+        
         // ゲームUIを表示
         updateGameUI();
         
@@ -110,6 +117,9 @@ async function initGame() {
 
 function updateGameUI() {
     if (!gameState) return;
+    
+    // ゲームモード変化をチェック
+    checkGameModeChange();
     
     // デバッグ情報を更新
     updateDebugInfo();
@@ -309,6 +319,22 @@ function setupEventListeners() {
     const pauseButton = document.getElementById('pause-game');
     if (pauseButton) {
         pauseButton.addEventListener('click', togglePause);
+    }
+    
+    // ゲームオーバーのリスタートボタン
+    const restartGameOverButton = document.getElementById('restart-game-over');
+    if (restartGameOverButton) {
+        restartGameOverButton.addEventListener('click', () => {
+            restartGameFromGameOver();
+        });
+    }
+    
+    // ゲームオーバーの閉じるボタン
+    const closeGameOverButton = document.getElementById('close-game-over');
+    if (closeGameOverButton) {
+        closeGameOverButton.addEventListener('click', () => {
+            hideGameOver();
+        });
     }
 }
 
@@ -809,6 +835,87 @@ function drawLineAnimation() {
             break;
         }
     }
+}
+
+// ゲームオーバー関連の関数
+function showGameOver() {
+    if (!gameState || gameOverShown) return;
+    
+    gameOverShown = true;
+    console.log('ゲームオーバー画面を表示');
+    
+    // 自動落下を停止
+    stopAutoFall();
+    
+    // 最終スコアを取得
+    const totalScore = gameState.get_score();
+    const colorScores = gameState.get_color_scores();
+    const maxChains = gameState.get_max_chains();
+    
+    // オーバーレイ要素を取得
+    const overlay = document.getElementById('game-over-overlay');
+    const finalTotalScore = document.getElementById('final-total-score');
+    const finalCyanScore = document.getElementById('final-cyan-score');
+    const finalMagentaScore = document.getElementById('final-magenta-score');
+    const finalYellowScore = document.getElementById('final-yellow-score');
+    const finalMaxChain = document.getElementById('final-max-chain');
+    
+    if (overlay && finalTotalScore && finalCyanScore && finalMagentaScore && finalYellowScore && finalMaxChain) {
+        // スコア情報を表示
+        finalTotalScore.textContent = totalScore.toString();
+        finalCyanScore.textContent = colorScores[0].toString();
+        finalMagentaScore.textContent = colorScores[1].toString(); 
+        finalYellowScore.textContent = colorScores[2].toString();
+        
+        // 最大チェーン（全色の最大値）
+        const maxChain = Math.max(maxChains[0], maxChains[1], maxChains[2]);
+        finalMaxChain.textContent = maxChain.toString();
+        
+        // オーバーレイを表示
+        overlay.classList.remove('hidden');
+    }
+}
+
+function hideGameOver() {
+    gameOverShown = false;
+    const overlay = document.getElementById('game-over-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+}
+
+function restartGameFromGameOver() {
+    if (!gameState) return;
+    
+    console.log('ゲームオーバーからリスタート');
+    
+    // ゲームオーバー画面を隠す
+    hideGameOver();
+    
+    // ゲーム状態をリセット
+    gameState.start_game();
+    currentGameMode = 1; // Playing mode
+    
+    // 自動落下を再開
+    startAutoFall();
+    
+    // UIを更新
+    updateGameUI();
+}
+
+// ゲームモード変化の検出
+function checkGameModeChange() {
+    if (!gameState) return;
+    
+    const newGameMode = gameState.get_game_mode();
+    
+    // ゲームオーバーになった場合
+    if (currentGameMode !== 2 && newGameMode === 2) {
+        console.log('ゲームオーバー検出！');
+        showGameOver();
+    }
+    
+    currentGameMode = newGameMode;
 }
 
 export { initGame };
