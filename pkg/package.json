@@ -1,0 +1,15 @@
+{
+  "name": "thud-and-tile",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "thud_and_tile_bg.wasm",
+    "thud_and_tile.js",
+    "thud_and_tile.d.ts"
+  ],
+  "main": "thud_and_tile.js",
+  "types": "thud_and_tile.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -5,7 +5,7 @@ npm-debug.log*
 # Build outputs
 dist/
 build/
-pkg/
+# pkg/ - Include pre-built WASM files for GitHub Pages deployment
 
 # Environment variables
 .env
