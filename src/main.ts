@@ -344,6 +344,11 @@ function setupTouchControls() {
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let lastDirection = 0; // 前回の移動方向 (1: 右, -1: 左, 0: なし)
+    let accumulatedMoves = 0; // 累積移動回数
+    let isProportionalMoving = false; // 比例移動中かどうか
+    let lastTouchX = 0; // 前回のタッチX座標
+    let moveStartX = 0; // 現在の移動シーケンスの開始X座標
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -351,6 +356,11 @@ function setupTouchControls() {
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
         touchStartTime = Date.now();
+        lastDirection = 0;
+        accumulatedMoves = 0;
+        isProportionalMoving = false;
+        lastTouchX = touch.clientX;
+        moveStartX = touch.clientX;
     });
     
     canvas.addEventListener('touchend', (e) => {
@@ -369,48 +379,124 @@ function setupTouchControls() {
         const minSwipeDistance = 30;
         const maxTapTime = 200;
         
-        // タップ（短時間で小さい移動）
-        if (deltaTime < maxTapTime && Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
-            // タップで回転
-            try {
-                gameState.handle_input(3); // RotateClockwise
-            } catch (error) {
-                console.error('Rotation failed:', error);
-            }
-        }
-        // スワイプ
-        else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // 横スワイプ
-            if (Math.abs(deltaX) > minSwipeDistance) {
+        // 比例移動していない場合のみ従来の操作を実行
+        if (!isProportionalMoving) {
+            // タップ（短時間で小さい移動）
+            if (deltaTime < maxTapTime && Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+                // タップで回転
                 try {
-                    if (deltaX > 0) {
-                        gameState.handle_input(1); // MoveRight
-                    } else {
-                        gameState.handle_input(0); // MoveLeft
-                    }
+                    gameState.handle_input(3); // RotateClockwise
                 } catch (error) {
-                    console.error('Move failed:', error);
+                    console.error('Rotation failed:', error);
                 }
             }
-        } else {
-            // 縦スワイプ
-            if (Math.abs(deltaY) > minSwipeDistance) {
-                try {
-                    if (deltaY > 0) {
-                        gameState.handle_input(2); // SoftDrop
-                    } else {
-                        gameState.handle_input(5); // HardDrop
+            // スワイプ
+            else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 横スワイプ
+                if (Math.abs(deltaX) > minSwipeDistance) {
+                    try {
+                        if (deltaX > 0) {
+                            gameState.handle_input(1); // MoveRight
+                        } else {
+                            gameState.handle_input(0); // MoveLeft
+                        }
+                    } catch (error) {
+                        console.error('Move failed:', error);
                     }
-                } catch (error) {
-                    console.error('Drop failed:', error);
+                }
+            } else {
+                // 縦スワイプ
+                if (Math.abs(deltaY) > minSwipeDistance) {
+                    try {
+                        if (deltaY > 0) {
+                            gameState.handle_input(2); // SoftDrop
+                        } else {
+                            gameState.handle_input(5); // HardDrop
+                        }
+                    } catch (error) {
+                        console.error('Drop failed:', error);
+                    }
                 }
             }
         }
+        
+        // 状態をリセット
+        lastDirection = 0;
+        accumulatedMoves = 0;
+        isProportionalMoving = false;
+        lastTouchX = 0;
+        moveStartX = 0;
     });
     
-    // タッチスクロールを防ぐ
+    // 比例移動機能付きtouchmoveハンドラ
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
+        if (!gameState) return;
+        
+        const touch = e.touches[0];
+        const currentX = touch.clientX;
+        const currentY = touch.clientY;
+        
+        // 開始点からの総移動量
+        const totalDeltaX = currentX - touchStartX;
+        const totalDeltaY = currentY - touchStartY;
+        
+        // 前回位置からの移動量（方向転換検出用）
+        const deltaFromLast = currentX - lastTouchX;
+        
+        // セルサイズを計算（ボードの幅に基づく）
+        const [BOARD_WIDTH] = get_board_dimensions();
+        const cellSize = canvas.width / BOARD_WIDTH;
+        
+        // 比例移動の最小閾値（セルサイズの半分）
+        const minProportionalThreshold = cellSize * 0.5;
+        
+        // 水平移動が主要で、かつ十分な距離を移動した場合のみ比例移動
+        if (Math.abs(totalDeltaX) > Math.abs(totalDeltaY) && Math.abs(totalDeltaX) > minProportionalThreshold) {
+            isProportionalMoving = true;
+            
+            // 前回位置からの移動方向を取得
+            const instantDirection = deltaFromLast > 0 ? 1 : deltaFromLast < 0 ? -1 : lastDirection;
+            
+            // 方向転換の検出：前回位置から逆方向に一定距離以上移動した場合
+            if (lastDirection === 0) {
+                // 初回の方向設定
+                lastDirection = instantDirection;
+                moveStartX = currentX;
+                console.log(`初回方向設定: ${lastDirection}`);
+            } else if (lastDirection !== instantDirection && Math.abs(deltaFromLast) > cellSize * 0.2) {
+                // 方向転換検出：前回位置から逆方向に移動した場合
+                console.log(`方向転換検出: ${lastDirection} -> ${instantDirection} (delta: ${deltaFromLast.toFixed(1)})`);
+                accumulatedMoves = 0;
+                lastDirection = instantDirection;
+                moveStartX = currentX; // 現在位置を新しい移動開始点に設定
+            }
+            
+            // 移動開始点からの移動距離で計算
+            const effectiveDeltaX = currentX - moveStartX;
+            const targetMoves = Math.floor(Math.abs(effectiveDeltaX) / cellSize);
+            
+            // まだ移動していない分を実行
+            const movesToExecute = targetMoves - accumulatedMoves;
+            
+            if (movesToExecute > 0) {
+                try {
+                    for (let i = 0; i < movesToExecute; i++) {
+                        if (lastDirection > 0) {
+                            gameState.handle_input(1); // MoveRight
+                        } else {
+                            gameState.handle_input(0); // MoveLeft
+                        }
+                        accumulatedMoves++;
+                    }
+                } catch (error) {
+                    console.error('Proportional move failed:', error);
+                }
+            }
+        }
+        
+        // 前回位置を更新
+        lastTouchX = currentX;
     });
 }
 
@@ -562,8 +648,8 @@ function drawGame() {
     // Connected cellsの詳細情報を取得して数字を描画
     const connectedCellsInfo = gameState.get_connected_cells_info();
     if (connectedCellsInfo && connectedCellsInfo.length > 0) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${Math.min(cellWidth, cellHeight) * 0.5}px Arial`;
+        // フォントサイズを大幅に拡大 - ブロックいっぱいまで大きく
+        ctx.font = `bold ${Math.min(cellWidth, cellHeight) * 0.8}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -574,9 +660,18 @@ function drawGame() {
             
             const pixelX = x * cellWidth;
             const pixelY = y * cellHeight;
+            const centerX = pixelX + cellWidth / 2;
+            const centerY = pixelY + cellHeight / 2;
+            const text = count.toString();
             
-            // 連結数を表示
-            ctx.fillText(count.toString(), pixelX + cellWidth / 2, pixelY + cellHeight / 2);
+            // 方法2: 黒いふちどりを先に描画（プロフェッショナルな見た目）
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = Math.max(3, Math.min(cellWidth, cellHeight) * 0.12); // ふちどりを太く調整
+            ctx.strokeText(text, centerX, centerY);
+            
+            // 白い文字を上に描画（華やかさと特別感を演出）
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, centerX, centerY);
         }
     }
     
@@ -657,15 +752,15 @@ function getCellColor(cellValue: number): string {
         case 8: return '#000000'; // Black
         case 9: return '#808080'; // Dark Grey
         
-        // Connected cells (10+) - CLI版の3色スコアリング用
-        case 10: return '#00cccc'; // Connected Cyan (0+10)
-        case 11: return '#cc00cc'; // Connected Magenta (1+10)
-        case 12: return '#cccc00'; // Connected Yellow (2+10)
+        // Connected cells (10+) - より明るく目立つ色に変更
+        case 10: return '#00ffff'; // Connected Cyan - 通常ピースと同じ明るさ
+        case 11: return '#ff00ff'; // Connected Magenta - 通常ピースと同じ明るさ  
+        case 12: return '#ffff00'; // Connected Yellow - 通常ピースと同じ明るさ
         
-        // その他のConnected cells（後方互換性）
-        case 13: return '#cc0000'; // Connected Red
-        case 14: return '#00cc00'; // Connected Green
-        case 15: return '#0000cc'; // Connected Blue
+        // その他のConnected cells（明るく調整）
+        case 13: return '#ff4444'; // Connected Red - より明るく
+        case 14: return '#44ff44'; // Connected Green - より明るく
+        case 15: return '#4444ff'; // Connected Blue - より明るく
         
         // Special cells
         case 20: return '#666666'; // Gray
