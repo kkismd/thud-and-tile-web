@@ -347,7 +347,8 @@ function setupTouchControls() {
     let lastDirection = 0; // 前回の移動方向 (1: 右, -1: 左, 0: なし)
     let accumulatedMoves = 0; // 累積移動回数
     let isProportionalMoving = false; // 比例移動中かどうか
-    let directionChangeX = 0; // 方向転換時の基準X座標
+    let lastTouchX = 0; // 前回のタッチX座標
+    let moveStartX = 0; // 現在の移動シーケンスの開始X座標
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -358,7 +359,8 @@ function setupTouchControls() {
         lastDirection = 0;
         accumulatedMoves = 0;
         isProportionalMoving = false;
-        directionChangeX = touch.clientX;
+        lastTouchX = touch.clientX;
+        moveStartX = touch.clientX;
     });
     
     canvas.addEventListener('touchend', (e) => {
@@ -422,6 +424,8 @@ function setupTouchControls() {
         lastDirection = 0;
         accumulatedMoves = 0;
         isProportionalMoving = false;
+        lastTouchX = 0;
+        moveStartX = 0;
     });
     
     // 比例移動機能付きtouchmoveハンドラ
@@ -437,6 +441,9 @@ function setupTouchControls() {
         const totalDeltaX = currentX - touchStartX;
         const totalDeltaY = currentY - touchStartY;
         
+        // 前回位置からの移動量（方向転換検出用）
+        const deltaFromLast = currentX - lastTouchX;
+        
         // セルサイズを計算（ボードの幅に基づく）
         const [BOARD_WIDTH] = get_board_dimensions();
         const cellSize = canvas.width / BOARD_WIDTH;
@@ -448,17 +455,25 @@ function setupTouchControls() {
         if (Math.abs(totalDeltaX) > Math.abs(totalDeltaY) && Math.abs(totalDeltaX) > minProportionalThreshold) {
             isProportionalMoving = true;
             
-            const currentDirection = totalDeltaX > 0 ? 1 : -1; // 1: 右, -1: 左
+            // 前回位置からの移動方向を取得
+            const instantDirection = deltaFromLast > 0 ? 1 : deltaFromLast < 0 ? -1 : lastDirection;
             
-            // 方向が変わった場合
-            if (lastDirection !== 0 && lastDirection !== currentDirection) {
+            // 方向転換の検出：前回位置から逆方向に一定距離以上移動した場合
+            if (lastDirection === 0) {
+                // 初回の方向設定
+                lastDirection = instantDirection;
+                moveStartX = currentX;
+                console.log(`初回方向設定: ${lastDirection}`);
+            } else if (lastDirection !== instantDirection && Math.abs(deltaFromLast) > cellSize * 0.2) {
+                // 方向転換検出：前回位置から逆方向に移動した場合
+                console.log(`方向転換検出: ${lastDirection} -> ${instantDirection} (delta: ${deltaFromLast.toFixed(1)})`);
                 accumulatedMoves = 0;
-                directionChangeX = currentX; // 方向転換点を新しい基準点に設定
+                lastDirection = instantDirection;
+                moveStartX = currentX; // 現在位置を新しい移動開始点に設定
             }
-            lastDirection = currentDirection;
             
-            // 方向転換後の基準点からの移動距離で計算
-            const effectiveDeltaX = currentX - directionChangeX;
+            // 移動開始点からの移動距離で計算
+            const effectiveDeltaX = currentX - moveStartX;
             const targetMoves = Math.floor(Math.abs(effectiveDeltaX) / cellSize);
             
             // まだ移動していない分を実行
@@ -467,7 +482,7 @@ function setupTouchControls() {
             if (movesToExecute > 0) {
                 try {
                     for (let i = 0; i < movesToExecute; i++) {
-                        if (currentDirection > 0) {
+                        if (lastDirection > 0) {
                             gameState.handle_input(1); // MoveRight
                         } else {
                             gameState.handle_input(0); // MoveLeft
@@ -479,6 +494,9 @@ function setupTouchControls() {
                 }
             }
         }
+        
+        // 前回位置を更新
+        lastTouchX = currentX;
     });
 }
 
