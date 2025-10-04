@@ -344,6 +344,10 @@ function setupTouchControls() {
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let lastDirection = 0; // 前回の移動方向 (1: 右, -1: 左, 0: なし)
+    let accumulatedMoves = 0; // 累積移動回数
+    let isProportionalMoving = false; // 比例移動中かどうか
+    let directionChangeX = 0; // 方向転換時の基準X座標
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -351,6 +355,10 @@ function setupTouchControls() {
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
         touchStartTime = Date.now();
+        lastDirection = 0;
+        accumulatedMoves = 0;
+        isProportionalMoving = false;
+        directionChangeX = touch.clientX;
     });
     
     canvas.addEventListener('touchend', (e) => {
@@ -369,48 +377,108 @@ function setupTouchControls() {
         const minSwipeDistance = 30;
         const maxTapTime = 200;
         
-        // タップ（短時間で小さい移動）
-        if (deltaTime < maxTapTime && Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
-            // タップで回転
-            try {
-                gameState.handle_input(3); // RotateClockwise
-            } catch (error) {
-                console.error('Rotation failed:', error);
-            }
-        }
-        // スワイプ
-        else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // 横スワイプ
-            if (Math.abs(deltaX) > minSwipeDistance) {
+        // 比例移動していない場合のみ従来の操作を実行
+        if (!isProportionalMoving) {
+            // タップ（短時間で小さい移動）
+            if (deltaTime < maxTapTime && Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+                // タップで回転
                 try {
-                    if (deltaX > 0) {
-                        gameState.handle_input(1); // MoveRight
-                    } else {
-                        gameState.handle_input(0); // MoveLeft
-                    }
+                    gameState.handle_input(3); // RotateClockwise
                 } catch (error) {
-                    console.error('Move failed:', error);
+                    console.error('Rotation failed:', error);
                 }
             }
-        } else {
-            // 縦スワイプ
-            if (Math.abs(deltaY) > minSwipeDistance) {
-                try {
-                    if (deltaY > 0) {
-                        gameState.handle_input(2); // SoftDrop
-                    } else {
-                        gameState.handle_input(5); // HardDrop
+            // スワイプ
+            else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 横スワイプ
+                if (Math.abs(deltaX) > minSwipeDistance) {
+                    try {
+                        if (deltaX > 0) {
+                            gameState.handle_input(1); // MoveRight
+                        } else {
+                            gameState.handle_input(0); // MoveLeft
+                        }
+                    } catch (error) {
+                        console.error('Move failed:', error);
                     }
-                } catch (error) {
-                    console.error('Drop failed:', error);
+                }
+            } else {
+                // 縦スワイプ
+                if (Math.abs(deltaY) > minSwipeDistance) {
+                    try {
+                        if (deltaY > 0) {
+                            gameState.handle_input(2); // SoftDrop
+                        } else {
+                            gameState.handle_input(5); // HardDrop
+                        }
+                    } catch (error) {
+                        console.error('Drop failed:', error);
+                    }
                 }
             }
         }
+        
+        // 状態をリセット
+        lastDirection = 0;
+        accumulatedMoves = 0;
+        isProportionalMoving = false;
     });
     
-    // タッチスクロールを防ぐ
+    // 比例移動機能付きtouchmoveハンドラ
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
+        if (!gameState) return;
+        
+        const touch = e.touches[0];
+        const currentX = touch.clientX;
+        const currentY = touch.clientY;
+        
+        // 開始点からの総移動量
+        const totalDeltaX = currentX - touchStartX;
+        const totalDeltaY = currentY - touchStartY;
+        
+        // セルサイズを計算（ボードの幅に基づく）
+        const [BOARD_WIDTH] = get_board_dimensions();
+        const cellSize = canvas.width / BOARD_WIDTH;
+        
+        // 比例移動の最小閾値（セルサイズの半分）
+        const minProportionalThreshold = cellSize * 0.5;
+        
+        // 水平移動が主要で、かつ十分な距離を移動した場合のみ比例移動
+        if (Math.abs(totalDeltaX) > Math.abs(totalDeltaY) && Math.abs(totalDeltaX) > minProportionalThreshold) {
+            isProportionalMoving = true;
+            
+            const currentDirection = totalDeltaX > 0 ? 1 : -1; // 1: 右, -1: 左
+            
+            // 方向が変わった場合
+            if (lastDirection !== 0 && lastDirection !== currentDirection) {
+                accumulatedMoves = 0;
+                directionChangeX = currentX; // 方向転換点を新しい基準点に設定
+            }
+            lastDirection = currentDirection;
+            
+            // 方向転換後の基準点からの移動距離で計算
+            const effectiveDeltaX = currentX - directionChangeX;
+            const targetMoves = Math.floor(Math.abs(effectiveDeltaX) / cellSize);
+            
+            // まだ移動していない分を実行
+            const movesToExecute = targetMoves - accumulatedMoves;
+            
+            if (movesToExecute > 0) {
+                try {
+                    for (let i = 0; i < movesToExecute; i++) {
+                        if (currentDirection > 0) {
+                            gameState.handle_input(1); // MoveRight
+                        } else {
+                            gameState.handle_input(0); // MoveLeft
+                        }
+                        accumulatedMoves++;
+                    }
+                } catch (error) {
+                    console.error('Proportional move failed:', error);
+                }
+            }
+        }
     });
 }
 
