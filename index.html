@@ -114,6 +114,38 @@
             margin: 5px 0;
             color: #cccccc;
         }
+
+        #game-rules {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            max-width: 600px;
+        }
+        
+        #game-rules h3 {
+            margin: 0 0 15px 0;
+            color: #00ffff;
+        }
+        
+        .rules-content p {
+            margin: 10px 0;
+            color: #cccccc;
+            line-height: 1.5;
+        }
+        
+        .rules-content strong {
+            color: #ffffff;
+        }
+        
+        .rules-content code {
+            background-color: #1a1a1a;
+            color: #00ffff;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
         
         button {
             background-color: #00ffff;
@@ -282,6 +314,21 @@
                 grid-template-columns: 1fr 1fr;
                 gap: 2px;
                 padding-left: 10px;
+            }
+
+            #game-rules {
+                width: 85vw;
+                max-width: 320px;
+                margin-top: 10px;
+                padding: 10px;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+            
+            .rules-content p {
+                margin: 8px 0;
+                font-size: 0.9rem;
+                line-height: 1.4;
             }
             
             #debug-info {
@@ -558,6 +605,33 @@
             <li>R: リスタート</li>
             <li>Q: 終了</li>
         </ul>
+    </div>
+
+    <div id="game-rules">
+        <h3>ゲームの遊び方</h3>
+        <div class="rules-content">
+            <p><strong>🧩 基本ルール</strong><br>
+            テトリスピースを操作して横一列を揃える定番パズル！でもちょっと違う仕組みがあります。</p>
+            
+            <p><strong>🎨 3色のカラフルピース</strong><br>
+            シアン、マゼンタ、イエローの3色を使ったピースが登場。同じピース内でも色はバラバラです。</p>
+            
+            <p><strong>🔗 つながる楽しさ</strong><br>
+            同じ色のブロック同士がくっつくと自動で連結！連結したブロックには数字が表示されて、何個つながったかわかります。</p>
+            
+            <p><strong>🔥 消去の仕組み</strong><br>
+            横一列が揃うと特別な消去が発生：<br>
+            ・揃ったラインより下のブロックはすべて消える（数字ブロックだけが得点に）<br>
+            ・揃ったラインは灰色の固定ブロックになってフィールド底に沈む<br>
+            ・フィールドがどんどん狭くなって難易度アップ！</p>
+            
+            <p><strong>🎯 スコアのコツ</strong><br>
+            色別にスコアと最大チェーン数を管理。同じ色をたくさん連結させてから消去すると高得点！<br>
+            計算式：<code>消去数字 × その色の最大チェーン × 10点</code></p>
+            
+            <p><strong>💡 戦略ポイント</strong><br>
+            フィールドが狭くなるので、普通のテトリスより計画的に！同色ブロックを大きく育ててから一気に消去を狙いましょう。</p>
+        </div>
     </div>
     
     <div id="debug-info">
