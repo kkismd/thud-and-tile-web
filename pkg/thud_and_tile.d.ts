@@ -21,30 +21,13 @@ export class WasmCustomScoreSystem {
    */
   constructor();
   /**
-   * 指定された色にスコアを加算（u8でGameColorを指定）
-   * 0=Cyan, 1=Magenta, 2=Yellow, その他は無視
+   * スコアを加算（色別管理は行わない）
    */
-  add_score(color_index: number, points: number): void;
+  add_score(points: number): void;
   /**
    * 合計スコアを取得
    */
   get_total_score(): number;
-  /**
-   * Cyanスコアを取得
-   */
-  get_cyan_score(): number;
-  /**
-   * Magentaスコアを取得
-   */
-  get_magenta_score(): number;
-  /**
-   * Yellowスコアを取得
-   */
-  get_yellow_score(): number;
-  /**
-   * 全色のスコアを配列で取得 [cyan, magenta, yellow]
-   */
-  get_all_scores(): Uint32Array;
   /**
    * 指定された色の最大チェーン数を更新
    */
@@ -67,9 +50,13 @@ export class WasmCustomScoreSystem {
   get_display_string(): string;
   /**
    * JavaScript用のスコア詳細情報を取得
-   * [total_score, cyan, magenta, yellow, max_chain, cyan_chain, magenta_chain, yellow_chain]
+   * [total_score, cyan_chain, magenta_chain, yellow_chain]
    */
   get_score_details(): Uint32Array;
+  /**
+   * 現在のchain bonus段数を取得
+   */
+  get_chain_bonus(): number;
 }
 /**
  * ゲーム状態を表すWASMエクスポート用構造体
@@ -94,16 +81,16 @@ export class WasmGameState {
    */
   get_score(): number;
   /**
-   * 3色別スコアを取得 [cyan, magenta, yellow]
-   */
-  get_color_scores(): Uint32Array;
-  /**
    * 3色別最大チェーン数を取得 [cyan, magenta, yellow]
    */
   get_max_chains(): Uint32Array;
   /**
+   * 現在のchain bonus段数を取得
+   */
+  get_chain_bonus(): number;
+  /**
    * スコア詳細情報を取得
-   * [total, cyan, magenta, yellow, max_chain, cyan_chain, magenta_chain, yellow_chain]
+   * [total, cyan_chain, magenta_chain, yellow_chain]
    */
   get_score_details(): Uint32Array;
   /**
@@ -195,25 +182,22 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_wasmcustomscoresystem_free: (a: number, b: number) => void;
   readonly wasmcustomscoresystem_new: () => number;
-  readonly wasmcustomscoresystem_add_score: (a: number, b: number, c: number) => void;
+  readonly wasmcustomscoresystem_add_score: (a: number, b: number) => void;
   readonly wasmcustomscoresystem_get_total_score: (a: number) => number;
-  readonly wasmcustomscoresystem_get_cyan_score: (a: number) => number;
-  readonly wasmcustomscoresystem_get_magenta_score: (a: number) => number;
-  readonly wasmcustomscoresystem_get_yellow_score: (a: number) => number;
-  readonly wasmcustomscoresystem_get_all_scores: (a: number) => [number, number];
   readonly wasmcustomscoresystem_update_max_chain: (a: number, b: number, c: number) => void;
   readonly wasmcustomscoresystem_get_max_chain: (a: number, b: number) => number;
   readonly wasmcustomscoresystem_get_all_max_chains: (a: number) => [number, number];
   readonly wasmcustomscoresystem_get_overall_max_chain: (a: number) => number;
   readonly wasmcustomscoresystem_get_display_string: (a: number) => [number, number];
   readonly wasmcustomscoresystem_get_score_details: (a: number) => [number, number];
+  readonly wasmcustomscoresystem_get_chain_bonus: (a: number) => number;
   readonly __wbg_wasmgamestate_free: (a: number, b: number) => void;
   readonly wasmgamestate_new: () => number;
   readonly wasmgamestate_start_game: (a: number) => void;
   readonly wasmgamestate_spawn_piece: (a: number) => void;
   readonly wasmgamestate_get_score: (a: number) => number;
-  readonly wasmgamestate_get_color_scores: (a: number) => [number, number];
   readonly wasmgamestate_get_max_chains: (a: number) => [number, number];
+  readonly wasmgamestate_get_chain_bonus: (a: number) => number;
   readonly wasmgamestate_get_score_details: (a: number) => [number, number];
   readonly wasmgamestate_get_score_display: (a: number) => [number, number];
   readonly wasmgamestate_get_game_mode: (a: number) => number;

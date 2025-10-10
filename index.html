@@ -67,6 +67,17 @@
             color: #ffff00;
         }
         
+        #chain-bonus-value {
+            font-size: 1.5rem;
+            color: #00ffff;
+        }
+
+        .chain-bonus-note {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: #cccccc;
+        }
+
         .color-score {
             display: flex;
             justify-content: space-between;
@@ -222,6 +233,14 @@
             .color-score {
                 font-size: 0.8rem;
                 margin: 1px 0;
+            }
+
+            #chain-bonus-value {
+                font-size: 1.1rem;
+            }
+
+            .chain-bonus-note {
+                font-size: 0.75rem;
             }
             
             #next-piece-canvas {
@@ -569,6 +588,12 @@
                     <span>YELLOW:</span>
                     <span id="yellow-max-chain">0</span>
                 </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>10-CHAIN</h3>
+                <div id="chain-bonus-value">0</div>
+                <div class="chain-bonus-note">蓄積段数</div>
             </div>
             
             <div class="info-panel">

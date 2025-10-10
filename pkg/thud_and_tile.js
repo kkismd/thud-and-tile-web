@@ -124,13 +124,11 @@ export class WasmCustomScoreSystem {
         return this;
     }
     /**
-     * 指定された色にスコアを加算（u8でGameColorを指定）
-     * 0=Cyan, 1=Magenta, 2=Yellow, その他は無視
-     * @param {number} color_index
+     * スコアを加算（色別管理は行わない）
      * @param {number} points
      */
-    add_score(color_index, points) {
-        wasm.wasmcustomscoresystem_add_score(this.__wbg_ptr, color_index, points);
+    add_score(points) {
+        wasm.wasmcustomscoresystem_add_score(this.__wbg_ptr, points);
     }
     /**
      * 合計スコアを取得
@@ -139,40 +137,6 @@ export class WasmCustomScoreSystem {
     get_total_score() {
         const ret = wasm.wasmcustomscoresystem_get_total_score(this.__wbg_ptr);
         return ret >>> 0;
-    }
-    /**
-     * Cyanスコアを取得
-     * @returns {number}
-     */
-    get_cyan_score() {
-        const ret = wasm.wasmcustomscoresystem_get_cyan_score(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * Magentaスコアを取得
-     * @returns {number}
-     */
-    get_magenta_score() {
-        const ret = wasm.wasmcustomscoresystem_get_magenta_score(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * Yellowスコアを取得
-     * @returns {number}
-     */
-    get_yellow_score() {
-        const ret = wasm.wasmcustomscoresystem_get_yellow_score(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    /**
-     * 全色のスコアを配列で取得 [cyan, magenta, yellow]
-     * @returns {Uint32Array}
-     */
-    get_all_scores() {
-        const ret = wasm.wasmcustomscoresystem_get_all_scores(this.__wbg_ptr);
-        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v1;
     }
     /**
      * 指定された色の最大チェーン数を更新
@@ -227,7 +191,7 @@ export class WasmCustomScoreSystem {
     }
     /**
      * JavaScript用のスコア詳細情報を取得
-     * [total_score, cyan, magenta, yellow, max_chain, cyan_chain, magenta_chain, yellow_chain]
+     * [total_score, cyan_chain, magenta_chain, yellow_chain]
      * @returns {Uint32Array}
      */
     get_score_details() {
@@ -235,6 +199,14 @@ export class WasmCustomScoreSystem {
         var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v1;
+    }
+    /**
+     * 現在のchain bonus段数を取得
+     * @returns {number}
+     */
+    get_chain_bonus() {
+        const ret = wasm.wasmcustomscoresystem_get_chain_bonus(this.__wbg_ptr);
+        return ret >>> 0;
     }
 }
 if (Symbol.dispose) WasmCustomScoreSystem.prototype[Symbol.dispose] = WasmCustomScoreSystem.prototype.free;
@@ -288,16 +260,6 @@ export class WasmGameState {
         return ret >>> 0;
     }
     /**
-     * 3色別スコアを取得 [cyan, magenta, yellow]
-     * @returns {Uint32Array}
-     */
-    get_color_scores() {
-        const ret = wasm.wasmgamestate_get_color_scores(this.__wbg_ptr);
-        var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v1;
-    }
-    /**
      * 3色別最大チェーン数を取得 [cyan, magenta, yellow]
      * @returns {Uint32Array}
      */
@@ -308,8 +270,16 @@ export class WasmGameState {
         return v1;
     }
     /**
+     * 現在のchain bonus段数を取得
+     * @returns {number}
+     */
+    get_chain_bonus() {
+        const ret = wasm.wasmgamestate_get_chain_bonus(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * スコア詳細情報を取得
-     * [total, cyan, magenta, yellow, max_chain, cyan_chain, magenta_chain, yellow_chain]
+     * [total, cyan_chain, magenta_chain, yellow_chain]
      * @returns {Uint32Array}
      */
     get_score_details() {

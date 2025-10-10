@@ -144,6 +144,7 @@ function updateDebugInfo() {
             WASM Version: ${get_version()}<br>
             Game Mode: ${gameState.get_game_mode()}<br>
             Total Score: ${gameState.get_score()}<br>
+            Chain Bonus: ${gameState.get_chain_bonus()}<br>
             Fall Speed: ${gameState.get_fall_speed_ms()}ms<br>
             ${animationStatus}
         `;
@@ -153,6 +154,11 @@ function updateDebugInfo() {
 function updateScoreDisplay() {
     if (!gameState) return;
 
+    const chainBonusElement = document.getElementById('chain-bonus-value');
+    if (chainBonusElement) {
+        chainBonusElement.textContent = gameState.get_chain_bonus().toString();
+    }
+
     // 総合スコア
     const scoreElement = document.getElementById('score');
     if (scoreElement) {
@@ -160,7 +166,10 @@ function updateScoreDisplay() {
     }
 
     // 3色別スコアを取得 [cyan, magenta, yellow]
-    const colorScores = gameState.get_color_scores();
+    const scoreDetails = gameState.get_score_details();
+    const colorScores = scoreDetails.length >= 4 
+        ? [scoreDetails[1], scoreDetails[2], scoreDetails[3]] 
+        : [0, 0, 0];
     
     const cyanElement = document.getElementById('cyan-score');
     if (cyanElement && colorScores.length >= 3) {
@@ -763,7 +772,7 @@ function getCellColor(cellValue: number): string {
         case 15: return '#4444ff'; // Connected Blue - より明るく
         
         // Special cells
-        case 20: return '#666666'; // Gray
+    case 20: return '#666666'; // Legacy gray (unused)
         case 21: return '#444444'; // Solid
         
         default: return '#222222'; // Default
@@ -917,10 +926,10 @@ function drawLineAnimation() {
             index += 4 + lineCount; // 次のアニメーションデータにスキップ
             
         } else if (animationType === 2) { // PushDown animation
-            const grayLineY = animationInfo[index + 2];
+            const solidLineY = animationInfo[index + 2];
             
             // PushDownアニメーション表示（将来実装）
-            console.log(`PushDown animation at line ${grayLineY}, elapsed: ${elapsedMs}ms`);
+            console.log(`PushDown animation at line ${solidLineY}, elapsed: ${elapsedMs}ms`);
             
             index += 3; // 次のアニメーションデータにスキップ
             
@@ -944,7 +953,10 @@ function showGameOver() {
     
     // 最終スコアを取得
     const totalScore = gameState.get_score();
-    const colorScores = gameState.get_color_scores();
+    const scoreDetails = gameState.get_score_details();
+    const colorScores = scoreDetails.length >= 4 
+        ? [scoreDetails[1], scoreDetails[2], scoreDetails[3]] 
+        : [0, 0, 0];
     const maxChains = gameState.get_max_chains();
     
     // オーバーレイ要素を取得
