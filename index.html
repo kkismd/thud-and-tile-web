@@ -61,40 +61,45 @@
             font-size: 1.5rem;
             color: #ffff00;
         }
-        
+
         #max-chain-overall {
             font-size: 1.5rem;
             color: #ffff00;
         }
-        
-        #chain-bonus-value {
-            font-size: 1.5rem;
-            color: #00ffff;
-        }
 
-        .chain-bonus-note {
-            margin-top: 6px;
-            font-size: 0.85rem;
-            color: #cccccc;
-        }
-
-        .color-score {
+        .stat-row {
             display: flex;
             justify-content: space-between;
-            margin: 2px 0;
+            align-items: center;
+            margin: 6px 0;
             font-size: 1.0rem;
         }
-        
-        .color-score.cyan {
+
+        .stat-label {
+            color: #cccccc;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .stat-label.cyan {
             color: #00ffff;
         }
-        
-        .color-score.magenta {
+
+        .stat-label.magenta {
             color: #ff00ff;
         }
-        
-        .color-score.yellow {
+
+        .stat-label.yellow {
             color: #ffff00;
+        }
+
+        .stat-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .stat-value.chain {
+            color: #00ffff;
         }
         
         #controls {
@@ -230,17 +235,9 @@
                 font-size: 1.1rem;
             }
             
-            .color-score {
-                font-size: 0.8rem;
-                margin: 1px 0;
-            }
-
-            #chain-bonus-value {
-                font-size: 1.1rem;
-            }
-
-            .chain-bonus-note {
-                font-size: 0.75rem;
+            .stat-row {
+                font-size: 0.85rem;
+                margin: 4px 0;
             }
             
             #next-piece-canvas {
@@ -309,8 +306,7 @@
             }
             
             .info-panel:nth-child(3),
-            .info-panel:nth-child(4),
-            .info-panel:nth-child(5) {
+            .info-panel:nth-child(4) {
                 grid-column: span 2;
             }
             
@@ -411,48 +407,23 @@
             text-shadow: 0 0 10px #ffff00;
         }
 
-        .color-scores-final {
+        .final-stats {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             margin: 15px 0;
         }
 
-        .color-score-final {
+        .final-stat-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 1.1rem;
-            padding: 5px 10px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+            padding: 6px 12px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
         }
 
-        .color-score-final.cyan {
-            color: #00ffff;
-            border-left: 4px solid #00ffff;
-        }
-
-        .color-score-final.magenta {
-            color: #ff00ff;
-            border-left: 4px solid #ff00ff;
-        }
-
-        .color-score-final.yellow {
-            color: #ffff00;
-            border-left: 4px solid #ffff00;
-        }
-
-        .max-chain-final {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.2rem;
-            padding: 8px 10px;
-            margin-top: 10px;
-            background-color: rgba(0, 255, 255, 0.1);
-            border-radius: 5px;
-            color: #00ffff;
-            border-left: 4px solid #00ffff;
-        }
 
         .game-over-buttons {
             display: flex;
@@ -538,11 +509,11 @@
                 gap: 10px;
             }
 
-            .color-scores-final {
+            .final-stats {
                 gap: 6px;
             }
 
-            .color-score-final {
+            .final-stat-row {
                 font-size: 1rem;
                 padding: 4px 8px;
             }
@@ -559,41 +530,27 @@
             <div class="info-panel">
                 <h3>スコア</h3>
                 <div id="score">0</div>
-                <div class="color-score cyan">
-                    <span>CYAN:</span>
-                    <span id="cyan-score">0</span>
-                </div>
-                <div class="color-score magenta">
-                    <span>MAGENTA:</span>
-                    <span id="magenta-score">0</span>
-                </div>
-                <div class="color-score yellow">
-                    <span>YELLOW:</span>
-                    <span id="yellow-score">0</span>
+                <div class="stat-row">
+                    <span class="stat-label">10-CHAIN-BONUS</span>
+                    <span id="chain-bonus-value" class="stat-value chain">0</span>
                 </div>
             </div>
             
             <div class="info-panel">
                 <h3>MAX-CHAIN</h3>
                 <div id="max-chain-overall">0</div>
-                <div class="color-score cyan">
-                    <span>CYAN:</span>
-                    <span id="cyan-max-chain">0</span>
+                <div class="stat-row">
+                    <span class="stat-label cyan">CYAN</span>
+                    <span id="cyan-max-chain" class="stat-value">0</span>
                 </div>
-                <div class="color-score magenta">
-                    <span>MAGENTA:</span>
-                    <span id="magenta-max-chain">0</span>
+                <div class="stat-row">
+                    <span class="stat-label magenta">MAGENTA</span>
+                    <span id="magenta-max-chain" class="stat-value">0</span>
                 </div>
-                <div class="color-score yellow">
-                    <span>YELLOW:</span>
-                    <span id="yellow-max-chain">0</span>
+                <div class="stat-row">
+                    <span class="stat-label yellow">YELLOW</span>
+                    <span id="yellow-max-chain" class="stat-value">0</span>
                 </div>
-            </div>
-
-            <div class="info-panel">
-                <h3>10-CHAIN</h3>
-                <div id="chain-bonus-value">0</div>
-                <div class="chain-bonus-note">蓄積段数</div>
             </div>
             
             <div class="info-panel">
@@ -643,7 +600,11 @@
             <p><strong>🎯 スコアのコツ</strong><br>
             色別にスコアと最大チェーン数を管理。同じ色をたくさん連結させてから消去すると高得点！<br>
             計算式：<code>消去数字 × その色の最大チェーン × 10点</code></p>
-            
+
+            <p><strong>🔋 10-CHAIN-BONUS</strong><br>
+            ライン消去で数字ブロックが崩れると「段数ボーナス」がたまります！（10個以上つながったブロックだけがカウント対象）<br>
+            たまったボーナスは、フィールド底の灰色ラインを削り取る救済機能に。大きな連結を狙って後半の切り札にしましょう！</p>
+
             <p><strong>💡 戦略ポイント</strong><br>
             フィールドが狭くなるので、普通のテトリスより計画的に！同色ブロックを大きく育ててから一気に消去を狙いましょう。</p>
         </div>
@@ -661,23 +622,15 @@
             <div class="final-score-section">
                 <h3>最終スコア</h3>
                 <div class="final-score" id="final-total-score">0</div>
-                <div class="color-scores-final">
-                    <div class="color-score-final cyan">
-                        <span>シアン:</span>
-                        <span id="final-cyan-score">0</span>
+                <div class="final-stats">
+                    <div class="final-stat-row">
+                        <span class="stat-label">10-CHAIN-BONUS</span>
+                        <span id="final-chain-bonus" class="stat-value chain">0</span>
                     </div>
-                    <div class="color-score-final magenta">
-                        <span>マゼンタ:</span>
-                        <span id="final-magenta-score">0</span>
+                    <div class="final-stat-row">
+                        <span class="stat-label">MAX-CHAIN</span>
+                        <span id="final-max-chain" class="stat-value">0</span>
                     </div>
-                    <div class="color-score-final yellow">
-                        <span>イエロー:</span>
-                        <span id="final-yellow-score">0</span>
-                    </div>
-                </div>
-                <div class="max-chain-final">
-                    <span>最大チェーン:</span>
-                    <span id="final-max-chain">0</span>
                 </div>
             </div>
             <div class="game-over-buttons">

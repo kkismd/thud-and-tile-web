@@ -165,27 +165,6 @@ function updateScoreDisplay() {
         scoreElement.textContent = gameState.get_score().toString();
     }
 
-    // 3色別スコアを取得 [cyan, magenta, yellow]
-    const scoreDetails = gameState.get_score_details();
-    const colorScores = scoreDetails.length >= 4 
-        ? [scoreDetails[1], scoreDetails[2], scoreDetails[3]] 
-        : [0, 0, 0];
-    
-    const cyanElement = document.getElementById('cyan-score');
-    if (cyanElement && colorScores.length >= 3) {
-        cyanElement.textContent = colorScores[0].toString(); // Cyan score
-    }
-
-    const magentaElement = document.getElementById('magenta-score');
-    if (magentaElement && colorScores.length >= 3) {
-        magentaElement.textContent = colorScores[1].toString(); // Magenta score
-    }
-
-    const yellowElement = document.getElementById('yellow-score');
-    if (yellowElement && colorScores.length >= 3) {
-        yellowElement.textContent = colorScores[2].toString(); // Yellow score
-    }
-
     // Max-chain表示を更新
     const maxChains = gameState.get_max_chains(); // [cyan, magenta, yellow]
     
@@ -953,26 +932,19 @@ function showGameOver() {
     
     // 最終スコアを取得
     const totalScore = gameState.get_score();
-    const scoreDetails = gameState.get_score_details();
-    const colorScores = scoreDetails.length >= 4 
-        ? [scoreDetails[1], scoreDetails[2], scoreDetails[3]] 
-        : [0, 0, 0];
+    const chainBonus = gameState.get_chain_bonus();
     const maxChains = gameState.get_max_chains();
     
     // オーバーレイ要素を取得
     const overlay = document.getElementById('game-over-overlay');
     const finalTotalScore = document.getElementById('final-total-score');
-    const finalCyanScore = document.getElementById('final-cyan-score');
-    const finalMagentaScore = document.getElementById('final-magenta-score');
-    const finalYellowScore = document.getElementById('final-yellow-score');
+    const finalChainBonus = document.getElementById('final-chain-bonus');
     const finalMaxChain = document.getElementById('final-max-chain');
     
-    if (overlay && finalTotalScore && finalCyanScore && finalMagentaScore && finalYellowScore && finalMaxChain) {
+    if (overlay && finalTotalScore && finalChainBonus && finalMaxChain) {
         // スコア情報を表示
         finalTotalScore.textContent = totalScore.toString();
-        finalCyanScore.textContent = colorScores[0].toString();
-        finalMagentaScore.textContent = colorScores[1].toString(); 
-        finalYellowScore.textContent = colorScores[2].toString();
+        finalChainBonus.textContent = chainBonus.toString();
         
         // 最大チェーン（全色の最大値）
         const maxChain = Math.max(maxChains[0], maxChains[1], maxChains[2]);
