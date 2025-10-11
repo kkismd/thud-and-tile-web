@@ -462,7 +462,7 @@ export class WasmGameState {
         return v1;
     }
     /**
-     * アニメーション処理を実行（CLI版互換・共通モジュール使用）
+     * アニメーション処理を実行（段階的ライン検出版）
      */
     update_animation() {
         wasm.wasmgamestate_update_animation(this.__wbg_ptr);

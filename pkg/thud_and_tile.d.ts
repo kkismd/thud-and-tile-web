@@ -167,7 +167,7 @@ export class WasmGameState {
    */
   get_ghost_piece_blocks(): Int32Array;
   /**
-   * アニメーション処理を実行（CLI版互換・共通モジュール使用）
+   * アニメーション処理を実行（段階的ライン検出版）
    */
   update_animation(): void;
   /**
