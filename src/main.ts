@@ -884,7 +884,9 @@ function drawLineAnimation() {
             index += 4 + lineCount; // 次のアニメーションデータにスキップ
             
         } else if (animationType === 2) { // PushDown animation
-            // PushDownアニメーション表示（将来実装）
+            // Note: PushDown中のSolidラインは通常のボード描画で自動的に表示される
+            // CLI版も同様に、特別な視覚エフェクト（落下軌跡など）は実装していない
+            // アニメーションはタイミング制御のみ（50msごとにボード状態を更新）
             
             index += 3; // 次のアニメーションデータにスキップ
             
