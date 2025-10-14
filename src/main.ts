@@ -14,12 +14,17 @@ let animationId: number;
 
 // 自動落下タイマー
 let autoFallInterval: number | null = null;
-// アニメーション更新タイマー
-let animationInterval: number | null = null;
+
+// アニメーション更新用タイムスタンプ
+let lastAnimationUpdate: number = 0;
 
 // ゲームオーバー状態
 let currentGameMode: number = 0; // 前回のゲームモード
 let gameOverShown: boolean = false; // ゲームオーバー画面が表示されているか
+
+// デバッグ情報更新用（60FPS→10FPSに間引き）
+let lastDebugUpdate: number = 0;
+const DEBUG_UPDATE_INTERVAL = 100; // 100ms = 10FPS
 
 // 入力マッピング
 const INPUT_MAPPING = {
@@ -98,9 +103,6 @@ async function initGame() {
         // イベントリスナーを設定
         setupEventListeners();
         
-        // アニメーション更新タイマーを開始
-        startAnimationUpdates();
-        
         // 自動落下機能を開始
         startAutoFall();
         
@@ -120,16 +122,19 @@ function updateGameUI() {
     
     // ゲームモード変化をチェック
     checkGameModeChange();
-    
-    // デバッグ情報を更新
-    updateDebugInfo();
 
     // スコア表示を更新
     updateScoreDisplay();
 }
 
-function updateDebugInfo() {
+function updateDebugInfo(currentTime: number) {
     if (!gameState) return;
+    
+    // デバッグ情報は10FPSに間引き（100ms間隔）
+    if (currentTime - lastDebugUpdate < DEBUG_UPDATE_INTERVAL) {
+        return;
+    }
+    lastDebugUpdate = currentTime;
     
     const debugElement = document.getElementById('debug-info');
     if (debugElement) {
@@ -500,25 +505,6 @@ function startGame() {
     updateGameUI();
 }
 
-function startAnimationUpdates() {
-    if (!gameState) return;
-    
-    // アニメーション更新タイマーを設定（16ms = 60FPS相当）
-    if (animationInterval !== null) {
-        clearInterval(animationInterval);
-    }
-    
-    animationInterval = window.setInterval(() => {
-        if (gameState) {
-            gameState.update_animation();
-            // アニメーション更新の場合はUIも更新
-            updateGameUI();
-        }
-    }, 16);
-    
-    console.log('アニメーション更新タイマー開始: 16ms間隔');
-}
-
 function startAutoFall() {
     if (!gameState) return;
     
@@ -592,10 +578,6 @@ function handleKeyPress(event: KeyboardEvent) {
             console.log(`入力処理完了: ${inputCode}`);
         }
     }
-}
-
-function updateUI() {
-    updateGameUI();
 }
 
 function drawGame() {
@@ -758,9 +740,22 @@ function getCellColor(cellValue: number): string {
     }
 }
 
-function gameLoop() {
-    updateUI();
+function gameLoop(currentTime: number = 0) {
+    // アニメーション状態を更新（16ms = 60FPS間隔）
+    if (gameState && currentTime - lastAnimationUpdate >= 16) {
+        gameState.update_animation();
+        lastAnimationUpdate = currentTime;
+    }
+    
+    // UI更新（60FPS）
+    updateGameUI();
+    
+    // デバッグ情報更新（10FPSに間引き）
+    updateDebugInfo(currentTime);
+    
+    // 描画（60FPS）
     drawGame();
+    
     animationId = requestAnimationFrame(gameLoop);
 }
 
