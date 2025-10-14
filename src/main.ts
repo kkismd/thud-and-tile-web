@@ -456,10 +456,8 @@ function setupTouchControls() {
                 // 初回の方向設定
                 lastDirection = instantDirection;
                 moveStartX = currentX;
-                console.log(`初回方向設定: ${lastDirection}`);
             } else if (lastDirection !== instantDirection && Math.abs(deltaFromLast) > cellSize * 0.2) {
                 // 方向転換検出：前回位置から逆方向に移動した場合
-                console.log(`方向転換検出: ${lastDirection} -> ${instantDirection} (delta: ${deltaFromLast.toFixed(1)})`);
                 accumulatedMoves = 0;
                 lastDirection = instantDirection;
                 moveStartX = currentX; // 現在位置を新しい移動開始点に設定
@@ -496,7 +494,6 @@ function setupTouchControls() {
 function startGame() {
     if (!gameState) return;
     
-    console.log('ゲーム開始');
     gameState.start_game();
     
     // 自動落下タイマーを開始
@@ -516,16 +513,11 @@ function startAutoFall() {
     // 自動落下の間隔を取得（WASMから）
     const fallSpeedMs = gameState.get_fall_speed_ms();
     
-    console.log(`自動落下タイマー開始: ${fallSpeedMs}ms間隔`);
-    
     // 自動落下タイマーを設定
     autoFallInterval = window.setInterval(() => {
         if (gameState && gameState.get_game_mode() === 1) { // Playing mode
-            const didFall = gameState.auto_fall();
-            if (didFall) {
-                console.log('自動落下実行');
-                updateGameUI();
-            }
+            gameState.auto_fall();
+            updateGameUI();
         }
     }, fallSpeedMs);
 }
@@ -534,13 +526,11 @@ function stopAutoFall() {
     if (autoFallInterval !== null) {
         clearInterval(autoFallInterval);
         autoFallInterval = null;
-        console.log('自動落下タイマー停止');
     }
 }
 
 function togglePause() {
     // 将来の実装: ポーズ機能
-    console.log('ポーズ機能は未実装');
 }
 
 function handleKeyPress(event: KeyboardEvent) {
@@ -552,11 +542,8 @@ function handleKeyPress(event: KeyboardEvent) {
     if (inputCode !== undefined) {
         event.preventDefault();
         
-        console.log(`キー入力: ${key} -> ${inputCode}`);
-        
         // 特別なキー処理
         if (inputCode === 6) { // Restart
-            console.log('ゲーム再開始');
             gameState.start_game();
             startAutoFall(); // 自動落下も再開始
             updateGameUI();
@@ -564,7 +551,6 @@ function handleKeyPress(event: KeyboardEvent) {
         }
         
         if (inputCode === 7) { // Quit
-            console.log('ゲーム終了');
             stopAutoFall();
             // ゲーム状態をリセット（将来の実装）
             return;
@@ -575,7 +561,6 @@ function handleKeyPress(event: KeyboardEvent) {
         
         if (handled) {
             updateGameUI();
-            console.log(`入力処理完了: ${inputCode}`);
         }
     }
 }
@@ -868,7 +853,6 @@ function drawLineAnimation() {
     let index = 0;
     while (index < animationInfo.length) {
         const animationType = animationInfo[index];
-        const elapsedMs = animationInfo[index + 1];
         
         if (animationType === 1) { // LineBlink animation
             const count = animationInfo[index + 2];
@@ -900,10 +884,7 @@ function drawLineAnimation() {
             index += 4 + lineCount; // 次のアニメーションデータにスキップ
             
         } else if (animationType === 2) { // PushDown animation
-            const solidLineY = animationInfo[index + 2];
-            
             // PushDownアニメーション表示（将来実装）
-            console.log(`PushDown animation at line ${solidLineY}, elapsed: ${elapsedMs}ms`);
             
             index += 3; // 次のアニメーションデータにスキップ
             
@@ -920,7 +901,6 @@ function showGameOver() {
     if (!gameState || gameOverShown) return;
     
     gameOverShown = true;
-    console.log('ゲームオーバー画面を表示');
     
     // 自動落下を停止
     stopAutoFall();
@@ -961,8 +941,6 @@ function hideGameOver() {
 function restartGameFromGameOver() {
     if (!gameState) return;
     
-    console.log('ゲームオーバーからリスタート');
-    
     // ゲームオーバー画面を隠す
     hideGameOver();
     
@@ -985,7 +963,6 @@ function checkGameModeChange() {
     
     // ゲームオーバーになった場合
     if (currentGameMode !== 2 && newGameMode === 2) {
-        console.log('ゲームオーバー検出！');
         showGameOver();
     }
     
